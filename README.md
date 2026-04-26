@@ -1,1 +1,1 @@
-# EquiScan-
+# EquiScan
