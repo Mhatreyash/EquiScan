@@ -6,4 +6,5 @@ build
 .env
 *.docx
 temp
-
+__pycache__
+*.pyc
