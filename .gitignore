@@ -8,3 +8,4 @@ build
 temp
 __pycache__
 *.pyc
+code_context.txt
