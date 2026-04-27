@@ -43,17 +43,32 @@ def calculate_stats(df: pd.DataFrame):
     females_hired = len(females_df[females_df['AI_Hired'].astype(str).str.lower() == 'true'])
     female_approval_rate = (females_hired / female_count * 100) if female_count > 0 else 0
     
-    if male_approval_rate == 0:
-        di_ratio = 1.0 
+    # ... inside calculate_stats() in main.py ...
+    
+    # --- FIND THE DISADVANTAGED GROUP DYNAMICALLY ---
+    if female_approval_rate < male_approval_rate:
+        disadvantaged_group = "Females"
+        privileged_group = "Males"
+        # DI Ratio is always (Lower Rate / Higher Rate)
+        di_ratio = round((female_approval_rate / male_approval_rate), 2) if male_approval_rate > 0 else 1.0
+    elif male_approval_rate < female_approval_rate:
+        disadvantaged_group = "Males"
+        privileged_group = "Females"
+        di_ratio = round((male_approval_rate / female_approval_rate), 2) if female_approval_rate > 0 else 1.0
     else:
-        di_ratio = round((female_approval_rate / male_approval_rate), 2)
-        
+        disadvantaged_group = "None"
+        privileged_group = "None"
+        di_ratio = 1.0
+
+    # Dynamic Status & Recommendation
     if di_ratio < 0.8:
         risk_score = 85 + (0.8 - di_ratio) * 10 
         risk_status = "HIGH LEGAL RISK"
+        rec = f"Model exhibits severe gender bias against {disadvantaged_group}. Mitigation required."
     else:
         risk_score = 15
         risk_status = "SAFE / COMPLIANT"
+        rec = "Model is compliant with the 80% rule for demographic parity. No severe bias detected."
 
     return total_records, male_count, male_approval_rate, female_count, female_approval_rate, di_ratio, risk_score, risk_status
 
