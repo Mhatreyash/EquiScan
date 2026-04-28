@@ -17,29 +17,6 @@
 
 <br/>
 
----
-
-## 📸 Screenshots
-
-<div align="center">
-
-### 🌙 Dark Mode — Compliance Dashboard
-<img src="docs/images/dashboard_dark.png" alt="EquiScan Dashboard Dark Mode" width="100%" />
-
-<br/><br/>
-
-### 🔍 AI Scanning Terminal
-<img src="docs/images/scan_terminal.png" alt="EquiScan Scanning Terminal" width="80%" />
-
-<br/><br/>
-
-### ☀️ Light Mode — Upload Page
-<img src="docs/images/upload_light.png" alt="EquiScan Upload Light Mode" width="80%" />
-
-</div>
-
----
-
 ## ✨ Key Features
 
 <table>
