@@ -1,8 +1,8 @@
 
 import axios from "axios";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// It will use Vercel's URL in production, or localhost when testing on your laptop
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";;
 
 export interface DemographicData {
   count: number;
@@ -22,6 +22,7 @@ export interface AnalyzeResponse {
   disparate_impact_ratio: number;
   recommendation: string;
   ai_explanation?: string; // <-- ADDED THIS (Brings in your SHAP AI text)
+  gemini_legal_summary?: string; // Gemini 1.5 legal compliance summary
 }
 
 export const analyzeFile = async (
@@ -36,19 +37,26 @@ export const analyzeFile = async (
       formData
     );
 
+    if (response.data.status === "error") {
+      throw new Error(response.data.message || "Failed to analyze file");
+    }
+
     return response.data;
   } catch (error: any) {
     console.error("API Error:", error);
-    throw new Error("Failed to analyze file");
+    throw error;
   }
 };
 
 export const mitigateFile = async (): Promise<AnalyzeResponse> => {
   try {
     const response = await axios.post(`${BASE_URL}/api/mitigate`);
+    if (response.data.status === "error") {
+      throw new Error(response.data.message || "Failed to mitigate bias");
+    }
     return response.data;
   } catch (error: any) {
     console.error("Mitigation Error:", error);
-    throw new Error("Failed to mitigate bias");
+    throw error;
   }
 };

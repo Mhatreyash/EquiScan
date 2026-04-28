@@ -2,15 +2,28 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import io
+import google.generativeai as genai
+import os
 
 # Import your new AI Engine!
 from ai_engine import analyze_with_ai, mitigate_dataset
+
+import os
+from dotenv import load_dotenv
+
+# Load local .env variables (if testing locally)
+load_dotenv() 
+
+# Get key from environment
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 app = FastAPI(title="EquiScan API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],  # Crucial for hackathon deployment
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -70,8 +83,24 @@ def calculate_stats(df: pd.DataFrame):
         risk_status = "SAFE / COMPLIANT"
         rec = "Model is compliant with the 80% rule for demographic parity. No severe bias detected."
 
-    return total_records, male_count, male_approval_rate, female_count, female_approval_rate, di_ratio, risk_score, risk_status
+    return total_records, male_count, male_approval_rate, female_count, female_approval_rate, di_ratio, risk_score, risk_status 
 
+def get_gemini_summary(di_ratio, penalty_pct):
+    try:
+        # Using Gemini 1.5 Flash for hyper-fast hackathon responses
+        model = genai.GenerativeModel('gemini-2.0-flash') 
+        prompt = f"""
+        Act as a Chief AI Compliance Officer. 
+        I ran a SHAP analysis on our hiring AI. 
+        The Disparate Impact Ratio is {di_ratio}. It unfairly penalizes candidates by {penalty_pct}% based on their demographic.
+        Write a concise, professional 3-sentence executive warning summarizing the legal risk under the EEOC 80% rule and recommending mitigation. 
+        Do not use markdown.
+        """
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        print("Gemini Error:", e)
+        return "CONFIDENTIAL WARNING: SHAP analysis confirms severe algorithmic bias. The model fails EEOC compliance standards. Immediate algorithmic mitigation required to prevent class-action liability."
 
 @app.post("/api/analyze")
 async def analyze_dataset(file: UploadFile = File(...)):
@@ -97,6 +126,9 @@ async def analyze_dataset(file: UploadFile = File(...)):
         if ai_results["success"]:
             # If the AI worked, append its profound explanation!
             recommendation += f" {ai_results['ai_explanation']}"
+# Call Gemini!
+        penalty = ai_results.get("female_penalty", 40) if ai_results.get("success") else 0
+        gemini_text = get_gemini_summary(di_ratio, penalty)
 
         return {
             "status": "success",
@@ -109,7 +141,8 @@ async def analyze_dataset(file: UploadFile = File(...)):
                 "Female": {"count": f_count, "approval_rate": round(f_rate, 1)}
             },
             "disparate_impact_ratio": di_ratio,
-            "recommendation": recommendation
+            "recommendation": recommendation,
+            "gemini_legal_summary": gemini_text  # <--- WE ADDED THIS
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}

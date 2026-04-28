@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { analyzeFile, AnalyzeResponse } from "@/services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import CountUp from "react-countup";
+import { usePDF } from "react-to-pdf";
+import { Sparkles, FileDown } from "lucide-react";
 
 const DonutChart = ({ score, color, isDark }: { score: number; color: string; isDark: boolean }) => {
   const r = 38;
@@ -87,14 +89,14 @@ const ScanTerminal = () => {
         {/* Title Bar */}
         <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border-subtle">
           <div className="flex gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-danger/70" />
-            <span className="w-2.5 h-2.5 rounded-full bg-warn/70" />
-            <span className="w-2.5 h-2.5 rounded-full bg-safe/70" />
+            <span className="w-2.5 h-2.5 rounded-full bg-danger opacity-70" />
+            <span className="w-2.5 h-2.5 rounded-full bg-warn opacity-70" />
+            <span className="w-2.5 h-2.5 rounded-full bg-safe opacity-70" />
           </div>
           <span className="text-[10px] font-mono text-t-muted ml-2">equi://audit-engine — scanning</span>
           <div className="ml-auto flex items-center gap-1.5">
             <StatusDot color="var(--color-safe)" />
-            <span className="text-[10px] font-mono text-safe/70">LIVE</span>
+            <span className="text-[10px] font-mono text-safe opacity-70">LIVE</span>
           </div>
         </div>
 
@@ -102,7 +104,7 @@ const ScanTerminal = () => {
         <div ref={containerRef} className="p-4 h-56 overflow-y-auto font-mono text-[13px] leading-relaxed space-y-1">
           {lines.map((line, i) => (
             <div key={i} className="flex gap-2">
-              <span className="text-zinc-700 select-none shrink-0">{String(i + 1).padStart(2, "0")}</span>
+              <span className="text-t-secondary select-none shrink-0">{String(i + 1).padStart(2, "0")}</span>
               <span className={line.includes("[AI]") ? "text-warn" : line.includes("[AUDIT]") || line.includes("[REPORT]") ? "text-safe" : "text-t-secondary"}>
                 {line}
               </span>
@@ -110,7 +112,7 @@ const ScanTerminal = () => {
           ))}
           {logIndex < SCAN_LOGS.length && (
             <div className="flex gap-2">
-              <span className="text-zinc-700 select-none shrink-0">{String(lines.length + 1).padStart(2, "0")}</span>
+              <span className="text-t-secondary select-none shrink-0">{String(lines.length + 1).padStart(2, "0")}</span>
               <span className="text-safe">
                 {currentText}<span className="animate-blink">▌</span>
               </span>
@@ -118,7 +120,7 @@ const ScanTerminal = () => {
           )}
           {logIndex >= SCAN_LOGS.length && (
             <div className="flex gap-2 mt-2">
-              <span className="text-zinc-700 select-none shrink-0">{'>>'}  </span>
+              <span className="text-t-secondary select-none shrink-0">{'>>'}  </span>
               <span className="text-safe font-semibold">Audit complete. Rendering dashboard<span className="animate-blink">▌</span></span>
             </div>
           )}
@@ -127,12 +129,12 @@ const ScanTerminal = () => {
         {/* Progress Bar */}
         <div className="px-4 pb-4">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-[0.1em]">Progress</span>
+            <span className="text-[10px] font-mono text-t-muted uppercase tracking-[0.1em]">Progress</span>
             <span className="text-[10px] font-mono text-safe">{Math.round(progress)}%</span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-white/[0.04] overflow-hidden">
+          <div className="h-1.5 w-full rounded-full bg-bg-card overflow-hidden">
             <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-safe/70 to-safe"
+              className="h-full rounded-full bg-safe"
               initial={{ width: "0%" }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.3, ease: "easeOut" }}
@@ -152,6 +154,7 @@ export default function Home() {
   const [isDragging, setIsDragging] = useState(false);
   const [isMitigating, setIsMitigating] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const { toPDF, targetRef } = usePDF({ filename: "EquiScan_Audit_Report.pdf" });
 
   useEffect(() => {
     const root = document.documentElement;
@@ -205,9 +208,9 @@ export default function Home() {
   const resetState = () => { setFile(null); setData(null); setStatus("idle"); setError(null); };
 
   const getRiskColor = (score: number) => {
-    if (score < 40) return { hex: "var(--color-safe)", text: "text-safe", bg: "bg-safe", dim: "bg-safe-dim", border: "border-safe/20" };
-    if (score < 70) return { hex: "var(--color-warn)", text: "text-warn", bg: "bg-warn", dim: "bg-warn-dim", border: "border-warn/20" };
-    return { hex: "var(--color-danger)", text: "text-danger", bg: "bg-danger", dim: "bg-danger-dim", border: "border-danger/20" };
+    if (score < 40) return { hex: "var(--color-safe)", text: "text-safe", bg: "bg-safe", dim: "bg-safe-dim", border: "border-safe" };
+    if (score < 70) return { hex: "var(--color-warn)", text: "text-warn", bg: "bg-warn", dim: "bg-warn-dim", border: "border-warn" };
+    return { hex: "var(--color-danger)", text: "text-danger", bg: "bg-danger", dim: "bg-danger-dim", border: "border-danger" };
   };
 
   const getDemoBarColor = (group: "Male" | "Female") => {
@@ -350,10 +353,21 @@ export default function Home() {
                   </div>
                   <h2 className="text-2xl font-bold tracking-tighter text-t-primary">Compliance Dashboard</h2>
                 </div>
-                <button onClick={resetState} className="px-4 py-2 rounded-lg border border-border-card bg-bg-card text-t-secondary text-xs font-medium hover:bg-bg-card-hover hover:text-t-primary transition-all">
-                  New Audit
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toPDF()}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border-card bg-bg-card text-t-secondary text-xs font-medium hover:bg-bg-card-hover hover:text-t-primary transition-all"
+                  >
+                    <FileDown className="w-3.5 h-3.5" />
+                    Export Official Audit (PDF)
+                  </button>
+                  <button onClick={resetState} className="px-4 py-2 rounded-lg border border-border-card bg-bg-card text-t-secondary text-xs font-medium hover:bg-bg-card-hover hover:text-t-primary transition-all">
+                    New Audit
+                  </button>
+                </div>
               </div>
+
+              <div ref={targetRef}>
 
               {/* KPI Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -395,6 +409,23 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* ── GEMINI 1.5 LEGAL ANALYSIS ── */}
+              {data.gemini_legal_summary && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.5 }}
+                  className="mb-4 rounded-[2rem] p-[1px]" style={{ background: "linear-gradient(135deg, #3b82f6, #8b5cf6, #f43f5e)" }}
+                >
+                  <div className={`rounded-[calc(2rem-1px)] p-6 backdrop-blur-xl ${isDarkMode ? "bg-[#1E1B31]/95" : "bg-white/95"}`}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Sparkles className="w-4.5 h-4.5 text-purple-400" />
+                      <h3 className="text-[11px] font-mono font-semibold uppercase tracking-[0.15em] text-purple-400">Google Gemini 2.0 Legal Analysis</h3>
+                      <span className="ml-auto text-[9px] font-mono text-t-muted border border-purple-400/30 rounded-full px-2 py-0.5">AI-GENERATED</span>
+                    </div>
+                    <p className="text-sm font-mono text-t-secondary leading-relaxed whitespace-pre-line">{data.gemini_legal_summary}</p>
+                  </div>
+                </motion.div>
+              )}
+
               {/* ── XAI MITIGATION CONSOLE ── */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.5 }}
@@ -403,9 +434,9 @@ export default function Home() {
                 {/* Console Header Bar */}
                 <div className="flex items-center gap-2 px-5 py-2.5 border-b border-border-subtle">
                   <div className="flex gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-danger/70" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-warn/70" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-safe/70" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-danger opacity-70" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-warn opacity-70" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-safe opacity-70" />
                   </div>
                   <span className="text-[10px] font-mono text-t-muted ml-2">equi://xai-mitigation-console</span>
                 </div>
@@ -438,7 +469,7 @@ export default function Home() {
                             : "bg-danger text-white shadow-[0_0_15px_rgba(192,96,90,0.3)] hover:shadow-[0_0_25px_rgba(192,96,90,0.45)]"
                         }`}
                       >
-                        {!isMitigating && <span className="absolute inset-0 rounded-lg animate-pulse-glow bg-danger/15" />}
+                        {!isMitigating && <span className="absolute inset-0 rounded-lg animate-pulse-glow bg-danger opacity-15" />}
                         <span className="relative z-10">{isMitigating ? "Recalibrating Neural Weights..." : "Initiate Neural Mitigation"}</span>
                       </motion.button>
                       {!isMitigating && <span className="text-[9px] font-mono text-t-muted">CAUTION: Irreversible operation</span>}
@@ -507,6 +538,10 @@ export default function Home() {
                   ))}
                 </div>
               </div>
+
+
+
+              </div>{/* close targetRef */}
 
             </motion.div>
           )}
